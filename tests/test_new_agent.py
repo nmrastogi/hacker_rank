@@ -73,6 +73,28 @@ class TestFilterPassed:
         """Test filtering empty candidate list"""
         passed = new_agent.filter_passed([], 70)
         assert len(passed) == 0
+    
+    def test_filter_with_various_scores(self, mock_candidates_with_various_scores):
+        """Test filtering with candidates having wide range of scores"""
+        # Test with 70% threshold
+        passed = new_agent.filter_passed(mock_candidates_with_various_scores, 70)
+        assert len(passed) == 3  # excellent (98), good (82), average (72)
+        assert all(c["percentage_score"] >= 70 for c in passed)
+        
+        # Test with 80% threshold
+        passed_high = new_agent.filter_passed(mock_candidates_with_various_scores, 80)
+        assert len(passed_high) == 2  # excellent (98), good (82)
+        
+        # Test with 50% threshold
+        passed_low = new_agent.filter_passed(mock_candidates_with_various_scores, 50)
+        assert len(passed_low) == 4  # All except failed (35)
+    
+    def test_filter_with_test_ids(self, mock_candidates_list):
+        """Test that candidates have test_id information"""
+        passed = new_agent.filter_passed(mock_candidates_list, 70)
+        # Verify test_id is preserved
+        assert all("test_id" in c for c in passed)
+        assert all(c["test_id"] == 356098 for c in passed)
 
 
 class TestGetCandidatesPage:
