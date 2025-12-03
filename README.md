@@ -106,6 +106,47 @@ The `.gitignore` file is configured to exclude:
 - `__pycache__/` directories
 - Other sensitive files
 
+## Testing
+
+This project uses pytest for testing. All tests are located in the `tests/` directory.
+
+### Running Tests
+
+```bash
+# Install test dependencies
+pip install -r requirements.txt
+
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_new_agent.py
+
+# Run specific test
+pytest tests/test_new_agent.py::TestExtractScore::test_extract_percentage_score
+
+# Run with coverage report
+pytest --cov=new_agent --cov-report=html
+```
+
+### Test Structure
+
+- `tests/test_new_agent.py` - Unit tests for all agent functions
+- `tests/conftest.py` - Shared fixtures and test configuration
+
+### Test Coverage
+
+The tests cover:
+- Score extraction from candidates
+- Filtering passed candidates
+- API pagination handling
+- Candidate invitation logic
+- Error handling
+- Edge cases (missing emails, no scores, etc.)
+
 ## License
 
 This project is provided as-is for educational and business use.

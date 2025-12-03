@@ -1,14 +1,25 @@
 import requests
 import time
+import logging
+import os
+from dotenv import load_dotenv
+
+# ===========================================================
+# LOGGING CONFIGURATION
+# ===========================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # ===========================================================
 # CONFIGURATION
 # ===========================================================
 
 BASE_URL = "https://www.hackerrank.com/x/api/v3"
-
-import os
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -56,6 +67,7 @@ def get_candidates_page(session, test_id, offset=0):
 
     res = session.get(url, params=params)
     if res.status_code != 200:
+        logger.error(f"Failed to fetch candidates page: {res.status_code} - {res.text}")
         raise Exception(f"Failed: {res.text}")
 
     return res.json()
@@ -107,7 +119,7 @@ def invite_to_test(session, test_id, candidate):
     name = candidate.get("full_name") or candidate.get("name") or "Candidate"
 
     if not email:
-        print(f"Skipping candidate with no email: {candidate}")
+        logger.warning(f"Skipping candidate with no email: {candidate}")
         return
 
     url = f"{BASE_URL}/tests/{test_id}/invites"
@@ -120,16 +132,16 @@ def invite_to_test(session, test_id, candidate):
 
     res = session.post(url, json=payload)
     if res.status_code not in (200, 201):
-        print(f"Failed to invite {email}: {res.text}")
+        logger.error(f"Failed to invite {email}: {res.text}")
     else:
-        print(f"Invited {email} to Test {test_id}")
+        logger.info(f"Invited {email} to Test {test_id}")
 
 
 def send_recruiter_invite(candidate):
     """Your Calendly / email automation goes here."""
     email = candidate.get("email")
     name = candidate.get("full_name")
-    print(f"[Recruiter Invite] Would send calendar link to {name} <{email}>")
+    logger.info(f"[Recruiter Invite] Would send calendar link to {name} <{email}>")
 
 
 # ===========================================================
@@ -139,28 +151,28 @@ def send_recruiter_invite(candidate):
 def run_pipeline():
     session = make_session()
 
-    print("Fetching Test A candidates...")
+    logger.info("Fetching Test A candidates...")
     candidates_a = get_all_candidates(session, TEST_A_ID)
-    print(f"Test A candidates: {len(candidates_a)}")
+    logger.info(f"Test A candidates: {len(candidates_a)}")
 
-    print("Filtering passed Test A...")
+    logger.info("Filtering passed Test A...")
     passed_a = filter_passed(candidates_a, TEST_A_PASS_SCORE)
-    print(f"Passed Test A: {len(passed_a)}")
+    logger.info(f"Passed Test A: {len(passed_a)}")
 
-    print("Inviting passed A → Test B...")
+    logger.info("Inviting passed A → Test B...")
     for c in passed_a:
         invite_to_test(session, TEST_B_ID, c)
         time.sleep(0.2)
 
-    print("\nFetching Test B candidates...")
+    logger.info("Fetching Test B candidates...")
     candidates_b = get_all_candidates(session, TEST_B_ID)
-    print(f"Test B candidates: {len(candidates_b)}")
+    logger.info(f"Test B candidates: {len(candidates_b)}")
 
-    print("Filtering passed Test B...")
+    logger.info("Filtering passed Test B...")
     passed_b = filter_passed(candidates_b, TEST_B_PASS_SCORE)
-    print(f"Passed Test B: {len(passed_b)}")
+    logger.info(f"Passed Test B: {len(passed_b)}")
 
-    print("\nSending recruiter invites...")
+    logger.info("Sending recruiter invites...")
     for c in passed_b:
         send_recruiter_invite(c)
 
