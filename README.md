@@ -102,6 +102,22 @@ Set these in your `.env` file or update the configuration in the code.
 
 This project includes an **MCP (Model Context Protocol) server** that exposes the agent's functionality as tools that AI assistants can call, including **Claude Desktop**.
 
+### Mock Data Mode
+
+The MCP server includes **20 mock candidates** with test scores for testing and demos without real API access.
+
+**Enable mock mode:**
+```bash
+# In .env file
+USE_MOCK_DATA=true
+```
+
+**Mock Data:**
+- Test A (356098): 12 candidates with scores 55-95%
+- Test B (2263157): 8 candidates with scores 78-98%
+
+See [MOCK_DATA_GUIDE.md](MOCK_DATA_GUIDE.md) for detailed usage instructions.
+
 ### Quick Setup for Claude Desktop
 
 **Option 1: Automated Setup (Recommended)**
