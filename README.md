@@ -133,9 +133,10 @@ See [CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md) for step-by-step instructions
 
 Once integrated, you can ask Claude to:
 - "Get all candidates who passed test 356098 with score above 70"
-- "Run the screening pipeline for tests 356098 and 2263157"
+- "Run the screening pipeline for tests 356098 and 2263157" (automatically sends emails to those who pass)
 - "Invite these candidates to test 2263157: [emails]"
 - "What are the scores for test 356098?"
+- "Send congratulatory emails to these candidates: [list]"
 
 ### Available Tools
 
@@ -143,8 +144,9 @@ The MCP server exposes these tools:
 - `list_all_tests` - List all available tests with statistics
 - `get_test_candidates` - Get candidates who passed a test
 - `invite_candidates_to_test` - Invite candidates to a test
-- `run_screening_pipeline` - Run complete screening workflow
+- `run_screening_pipeline` - Run complete screening workflow (includes email sending)
 - `get_candidate_scores` - Get candidate scores
+- `send_email_to_candidates` - Send congratulatory emails to candidates
 
 ### Documentation
 

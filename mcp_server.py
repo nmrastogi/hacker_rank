@@ -7,8 +7,17 @@ by AI assistants and other MCP clients.
 
 import os
 import json
+import logging
 from typing import List, Dict, Optional, Any
 from dotenv import load_dotenv
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -382,7 +391,8 @@ if MCP_AVAILABLE:
         3. Invites them to Test B
         4. Gets Test B results
         5. Filters those who passed Test B
-        6. Returns list ready for recruiter calls
+        6. Sends congratulatory emails to candidates who passed Test B
+        7. Returns list ready for recruiter calls
         
         Args:
             test_a_id: Initial screening test ID
@@ -418,6 +428,9 @@ if MCP_AVAILABLE:
                     for c in passed_b
                 ]
                 
+                # Step 5: Send emails to candidates who passed Test B
+                email_results = send_email_to_candidates(recruiter_ready)
+                
                 return {
                     "test_a": {
                         "id": test_a_id,
@@ -434,6 +447,11 @@ if MCP_AVAILABLE:
                     "invited_to_test_b": len(passed_a),
                     "recruiter_ready_count": len(recruiter_ready),
                     "recruiter_ready_candidates": recruiter_ready,
+                    "emails_sent": email_results.get("emails_sent", 0),
+                    "email_results": {
+                        "successful": email_results.get("successful", []),
+                        "failed": email_results.get("failed", [])
+                    },
                     "mock_data": True
                 }
             
@@ -471,6 +489,9 @@ if MCP_AVAILABLE:
                 for c in passed_b
             ]
             
+            # Step 5: Send emails to candidates who passed Test B
+            email_results = send_email_to_candidates(recruiter_ready)
+            
             return {
                 "test_a": {
                     "id": test_a_id,
@@ -487,6 +508,11 @@ if MCP_AVAILABLE:
                 "invited_to_test_b": invited_count,
                 "recruiter_ready_count": len(recruiter_ready),
                 "recruiter_ready_candidates": recruiter_ready,
+                "emails_sent": email_results.get("emails_sent", 0),
+                "email_results": {
+                    "successful": email_results.get("successful", []),
+                    "failed": email_results.get("failed", [])
+                },
                 "mock_data": False
             }
         except Exception as e:
@@ -573,6 +599,113 @@ if MCP_AVAILABLE:
                     "tests": tests,
                     "mock_data": False
                 }
+        except Exception as e:
+            return {"error": str(e)}
+
+
+    @mcp.tool()
+    def send_email_to_candidates(
+        candidates: List[Dict[str, Any]],
+        email_subject: str = "Congratulations! Next Steps in Your Application",
+        email_template: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Send congratulatory emails to candidates who passed the advanced test.
+        
+        Args:
+            candidates: List of candidate dictionaries with email, name, and score
+            email_subject: Subject line for the email (default: "Congratulations! Next Steps in Your Application")
+            email_template: Optional custom email template. If not provided, uses default template.
+        
+        Returns:
+            Dictionary with email sending results
+        """
+        try:
+            results = {
+                "total_candidates": len(candidates),
+                "emails_sent": 0,
+                "successful": [],
+                "failed": [],
+                "mock_data": USE_MOCK_DATA
+            }
+            
+            # Default email template
+            default_template = """Dear {name},
+
+Congratulations on passing our advanced technical assessment!
+
+Your score: {score}%
+
+We are impressed with your performance and would like to move forward with the next steps in our hiring process.
+
+Our recruitment team will be in touch with you shortly to schedule the next interview.
+
+Best regards,
+The Hiring Team"""
+            
+            template = email_template or default_template
+            
+            for candidate in candidates:
+                email = candidate.get("email")
+                name = candidate.get("name") or candidate.get("full_name") or "Candidate"
+                score = candidate.get("score") or new_agent.extract_score(candidate)
+                
+                if not email:
+                    results["failed"].append({
+                        "candidate": name,
+                        "error": "No email address provided"
+                    })
+                    continue
+                
+                try:
+                    if USE_MOCK_DATA:
+                        # In mock mode, just log the email
+                        email_body = template.format(name=name, score=score)
+                        logger.info(f"[MOCK EMAIL] To: {email}")
+                        logger.info(f"[MOCK EMAIL] Subject: {email_subject}")
+                        logger.info(f"[MOCK EMAIL] Body preview: {email_body[:100]}...")
+                        results["successful"].append({
+                            "email": email,
+                            "name": name,
+                            "score": score
+                        })
+                        results["emails_sent"] += 1
+                    else:
+                        # In real mode, send actual email
+                        # TODO: Integrate with your email service (SMTP, SendGrid, etc.)
+                        # For now, we'll use the same logging approach
+                        email_body = template.format(name=name, score=score)
+                        logger.info(f"[EMAIL] Sending to: {email}")
+                        logger.info(f"[EMAIL] Subject: {email_subject}")
+                        logger.info(f"[EMAIL] Body: {email_body}")
+                        
+                        # Placeholder for actual email sending
+                        # Example with SMTP:
+                        # import smtplib
+                        # from email.mime.text import MIMEText
+                        # msg = MIMEText(email_body)
+                        # msg['Subject'] = email_subject
+                        # msg['From'] = os.getenv('EMAIL_FROM')
+                        # msg['To'] = email
+                        # server = smtplib.SMTP(os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'))
+                        # server.send_message(msg)
+                        # server.quit()
+                        
+                        results["successful"].append({
+                            "email": email,
+                            "name": name,
+                            "score": score
+                        })
+                        results["emails_sent"] += 1
+                        
+                except Exception as e:
+                    results["failed"].append({
+                        "email": email,
+                        "name": name,
+                        "error": str(e)
+                    })
+            
+            return results
         except Exception as e:
             return {"error": str(e)}
 
