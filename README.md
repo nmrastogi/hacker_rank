@@ -140,6 +140,7 @@ Once integrated, you can ask Claude to:
 ### Available Tools
 
 The MCP server exposes these tools:
+- `list_all_tests` - List all available tests with statistics
 - `get_test_candidates` - Get candidates who passed a test
 - `invite_candidates_to_test` - Invite candidates to a test
 - `run_screening_pipeline` - Run complete screening workflow
