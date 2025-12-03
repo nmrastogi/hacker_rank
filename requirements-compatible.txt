@@ -1,0 +1,22 @@
+# Compatible requirements for environments with existing packages
+# Use this if you have dependency conflicts with anaconda/jupyter
+
+requests>=2.31.0
+python-dotenv>=1.0.0
+pytest>=7.4.0
+pytest-mock>=3.11.0
+pytest-cov>=4.1.0
+
+# MCP dependencies - use compatible versions
+mcp>=0.9.0
+pydantic>=2.0.0,<3.0.0
+
+# FastAPI - newer version supports anyio 4.x
+fastapi>=0.115.0
+uvicorn>=0.24.0
+
+# Note: anyio version depends on your environment
+# If you have jupyter-server, you may need anyio<4
+# If you have newer packages, anyio>=4.0.0 works
+# The MCP package will work with either
+

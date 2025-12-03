@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "hackerrank-agent": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "env": {
+        "PYTHONPATH": "."
+      }
+    }
+  }
+}
+

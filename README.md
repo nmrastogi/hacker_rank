@@ -94,8 +94,45 @@ Set these in your `.env` file or update the configuration in the code.
 ## Files
 
 - `new_agent.py` - Main agent implementation
+- `mcp_server.py` - MCP server exposing agent as tools for AI assistants
 - `create_test.py` - Helper script for creating tests
 - `try.py` - Example API usage
+
+## MCP Server & Claude Integration
+
+This project includes an **MCP (Model Context Protocol) server** that exposes the agent's functionality as tools that AI assistants can call, including **Claude Desktop**.
+
+### Quick Setup for Claude Desktop
+
+**Option 1: Automated Setup (Recommended)**
+```bash
+./setup_claude_desktop.sh
+```
+Then restart Claude Desktop.
+
+**Option 2: Manual Setup**
+See [CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md) for step-by-step instructions.
+
+### Available Tools in Claude
+
+Once integrated, you can ask Claude to:
+- "Get all candidates who passed test 356098 with score above 70"
+- "Run the screening pipeline for tests 356098 and 2263157"
+- "Invite these candidates to test 2263157: [emails]"
+- "What are the scores for test 356098?"
+
+### Available Tools
+
+The MCP server exposes these tools:
+- `get_test_candidates` - Get candidates who passed a test
+- `invite_candidates_to_test` - Invite candidates to a test
+- `run_screening_pipeline` - Run complete screening workflow
+- `get_candidate_scores` - Get candidate scores
+
+### Documentation
+
+- **[CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md)** - Complete Claude Desktop setup and integration guide
+- **[TESTING.md](TESTING.md)** - Testing guide with pytest
 
 ## Security
 
