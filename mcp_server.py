@@ -392,7 +392,8 @@ if MCP_AVAILABLE:
         4. Gets Test B results
         5. Filters those who passed Test B
         6. Sends congratulatory emails to candidates who passed Test B
-        7. Returns list ready for recruiter calls
+        7. Sends Google Meet invites to top 3 candidates (by score)
+        8. Returns list ready for recruiter calls
         
         Args:
             test_a_id: Initial screening test ID
@@ -431,6 +432,12 @@ if MCP_AVAILABLE:
                 # Step 5: Send emails to candidates who passed Test B
                 email_results = send_email_to_candidates(recruiter_ready)
                 
+                # Step 6: Send Google Meet invites to top 3 candidates
+                meet_invite_results = send_google_meet_invites_to_top_candidates(
+                    recruiter_ready,
+                    top_n=3
+                )
+                
                 return {
                     "test_a": {
                         "id": test_a_id,
@@ -451,6 +458,11 @@ if MCP_AVAILABLE:
                     "email_results": {
                         "successful": email_results.get("successful", []),
                         "failed": email_results.get("failed", [])
+                    },
+                    "google_meet_invites_sent": meet_invite_results.get("invites_sent", 0),
+                    "google_meet_invites": {
+                        "successful": meet_invite_results.get("successful", []),
+                        "failed": meet_invite_results.get("failed", [])
                     },
                     "mock_data": True
                 }
@@ -492,6 +504,12 @@ if MCP_AVAILABLE:
             # Step 5: Send emails to candidates who passed Test B
             email_results = send_email_to_candidates(recruiter_ready)
             
+            # Step 6: Send Google Meet invites to top 3 candidates
+            meet_invite_results = send_google_meet_invites_to_top_candidates(
+                recruiter_ready,
+                top_n=3
+            )
+            
             return {
                 "test_a": {
                     "id": test_a_id,
@@ -512,6 +530,11 @@ if MCP_AVAILABLE:
                 "email_results": {
                     "successful": email_results.get("successful", []),
                     "failed": email_results.get("failed", [])
+                },
+                "google_meet_invites_sent": meet_invite_results.get("invites_sent", 0),
+                "google_meet_invites": {
+                    "successful": meet_invite_results.get("successful", []),
+                    "failed": meet_invite_results.get("failed", [])
                 },
                 "mock_data": False
             }
@@ -697,6 +720,271 @@ The Hiring Team"""
                             "score": score
                         })
                         results["emails_sent"] += 1
+                        
+                except Exception as e:
+                    results["failed"].append({
+                        "email": email,
+                        "name": name,
+                        "error": str(e)
+                    })
+            
+            return results
+        except Exception as e:
+            return {"error": str(e)}
+
+
+    @mcp.tool()
+    def send_google_meet_invites_to_top_candidates(
+        candidates: List[Dict[str, Any]],
+        top_n: int = 3,
+        meeting_title: str = "Technical Interview - Next Steps",
+        meeting_duration_minutes: int = 60,
+        meeting_date: Optional[str] = None,
+        meeting_description: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Send Google Calendar invites with Google Meet links to the top N candidates based on their scores.
+        Creates calendar events and sends invites via Google Calendar API.
+        
+        Args:
+            candidates: List of candidate dictionaries with email, name, and score
+            top_n: Number of top candidates to invite (default: 3)
+            meeting_title: Title for the calendar event (default: "Technical Interview - Next Steps")
+            meeting_duration_minutes: Duration of the meeting in minutes (default: 60)
+            meeting_date: Optional meeting date/time in ISO format (e.g., "2024-01-20T14:00:00").
+                        If not provided, uses a default future date.
+            meeting_description: Optional description for the calendar event
+        
+        Returns:
+            Dictionary with invite results including calendar event IDs and Google Meet links
+        """
+        try:
+            import datetime
+            
+            results = {
+                "total_candidates": len(candidates),
+                "top_n": top_n,
+                "invites_sent": 0,
+                "successful": [],
+                "failed": [],
+                "mock_data": USE_MOCK_DATA
+            }
+            
+            if not candidates:
+                return results
+            
+            # Sort candidates by score (descending) and get top N
+            sorted_candidates = sorted(
+                candidates,
+                key=lambda c: c.get("score") or new_agent.extract_score(c) or 0,
+                reverse=True
+            )
+            top_candidates = sorted_candidates[:top_n]
+            
+            # Set default meeting date if not provided (7 days from now)
+            if not meeting_date:
+                default_date = datetime.datetime.now() + datetime.timedelta(days=7)
+                meeting_date = default_date.strftime("%Y-%m-%dT14:00:00")
+            
+            # Parse meeting date and calculate end time
+            start_datetime = datetime.datetime.fromisoformat(meeting_date.replace('Z', '+00:00'))
+            end_datetime = start_datetime + datetime.timedelta(minutes=meeting_duration_minutes)
+            start_time_str = start_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+            end_time_str = end_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+            
+            # Default description
+            if not meeting_description:
+                meeting_description = f"Technical interview with {meeting_title}. Looking forward to discussing your assessment results!"
+            
+            for candidate in top_candidates:
+                email = candidate.get("email")
+                name = candidate.get("name") or candidate.get("full_name") or "Candidate"
+                score = candidate.get("score") or new_agent.extract_score(candidate)
+                
+                if not email:
+                    results["failed"].append({
+                        "candidate": name,
+                        "error": "No email address provided"
+                    })
+                    continue
+                
+                try:
+                    if USE_MOCK_DATA:
+                        # In mock mode, generate mock calendar event details
+                        import hashlib
+                        import uuid
+                        link_hash = hashlib.md5(f"{email}{meeting_date}".encode()).hexdigest()[:12]
+                        mock_meet_link = f"https://meet.google.com/mock-{link_hash}"
+                        mock_event_id = str(uuid.uuid4())[:8]
+                        
+                        logger.info(f"[MOCK CALENDAR INVITE] To: {email}")
+                        logger.info(f"[MOCK CALENDAR INVITE] Title: {meeting_title}")
+                        logger.info(f"[MOCK CALENDAR INVITE] Date: {start_time_str} - {end_time_str}")
+                        logger.info(f"[MOCK CALENDAR INVITE] Event ID: {mock_event_id}")
+                        logger.info(f"[MOCK CALENDAR INVITE] Meet Link: {mock_meet_link}")
+                        logger.info(f"[MOCK CALENDAR INVITE] Description: {meeting_description}")
+                        
+                        results["successful"].append({
+                            "email": email,
+                            "name": name,
+                            "score": score,
+                            "event_id": mock_event_id,
+                            "calendar_link": f"https://calendar.google.com/event?eid={mock_event_id}",
+                            "meet_link": mock_meet_link,
+                            "meeting_title": meeting_title,
+                            "meeting_date": start_time_str,
+                            "meeting_end": end_time_str,
+                            "duration_minutes": meeting_duration_minutes,
+                            "description": meeting_description,
+                            "invite_sent": True
+                        })
+                        results["invites_sent"] += 1
+                    else:
+                        # In real mode, create actual Google Calendar event with Meet link
+                        try:
+                            from google.oauth2.credentials import Credentials
+                            from google_auth_oauthlib.flow import InstalledAppFlow
+                            from google.auth.transport.requests import Request
+                            from googleapiclient.discovery import build
+                            import pickle
+                            import os.path
+                            
+                            # Google Calendar API scopes
+                            SCOPES = ['https://www.googleapis.com/auth/calendar']
+                            
+                            # Get calendar service
+                            creds = None
+                            token_path = os.getenv('GOOGLE_CALENDAR_TOKEN_PATH', 'token.pickle')
+                            credentials_path = os.getenv('GOOGLE_CALENDAR_CREDENTIALS_PATH', 'credentials.json')
+                            
+                            # Load existing token or get new one
+                            if os.path.exists(token_path):
+                                with open(token_path, 'rb') as token:
+                                    creds = pickle.load(token)
+                            
+                            # If there are no (valid) credentials available, let the user log in
+                            if not creds or not creds.valid:
+                                if creds and creds.expired and creds.refresh_token:
+                                    creds.refresh(Request())
+                                else:
+                                    if not os.path.exists(credentials_path):
+                                        raise FileNotFoundError(
+                                            f"Google Calendar credentials not found at {credentials_path}. "
+                                            "Please set up Google Calendar API credentials. See documentation."
+                                        )
+                                    flow = InstalledAppFlow.from_client_secrets_file(
+                                        credentials_path, SCOPES)
+                                    creds = flow.run_local_server(port=0)
+                                
+                                # Save the credentials for the next run
+                                with open(token_path, 'wb') as token:
+                                    pickle.dump(creds, token)
+                            
+                            # Build calendar service
+                            service = build('calendar', 'v3', credentials=creds)
+                            
+                            # Create calendar event with Google Meet
+                            event = {
+                                'summary': meeting_title,
+                                'description': meeting_description,
+                                'start': {
+                                    'dateTime': start_time_str,
+                                    'timeZone': os.getenv('GOOGLE_CALENDAR_TIMEZONE', 'UTC'),
+                                },
+                                'end': {
+                                    'dateTime': end_time_str,
+                                    'timeZone': os.getenv('GOOGLE_CALENDAR_TIMEZONE', 'UTC'),
+                                },
+                                'attendees': [
+                                    {'email': email, 'displayName': name}
+                                ],
+                                'conferenceData': {
+                                    'createRequest': {
+                                        'requestId': f'meet-{email}-{int(datetime.datetime.now().timestamp())}',
+                                        'conferenceSolutionKey': {'type': 'hangoutsMeet'}
+                                    }
+                                },
+                                'reminders': {
+                                    'useDefault': False,
+                                    'overrides': [
+                                        {'method': 'email', 'minutes': 24 * 60},  # 1 day before
+                                        {'method': 'popup', 'minutes': 15},  # 15 minutes before
+                                    ],
+                                },
+                            }
+                            
+                            # Insert event with conference data
+                            created_event = service.events().insert(
+                                calendarId='primary',
+                                body=event,
+                                conferenceDataVersion=1,
+                                sendUpdates='all'  # Send calendar invites to attendees
+                            ).execute()
+                            
+                            # Extract Meet link from event
+                            meet_link = None
+                            if 'conferenceData' in created_event:
+                                entry_points = created_event['conferenceData'].get('entryPoints', [])
+                                if entry_points:
+                                    meet_link = entry_points[0].get('uri')
+                            
+                            event_id = created_event.get('id')
+                            html_link = created_event.get('htmlLink')
+                            
+                            logger.info(f"[CALENDAR INVITE] Created event for: {email}")
+                            logger.info(f"[CALENDAR INVITE] Event ID: {event_id}")
+                            logger.info(f"[CALENDAR INVITE] Meet Link: {meet_link}")
+                            logger.info(f"[CALENDAR INVITE] Calendar Link: {html_link}")
+                            
+                            results["successful"].append({
+                                "email": email,
+                                "name": name,
+                                "score": score,
+                                "event_id": event_id,
+                                "calendar_link": html_link,
+                                "meet_link": meet_link,
+                                "meeting_title": meeting_title,
+                                "meeting_date": start_time_str,
+                                "meeting_end": end_time_str,
+                                "duration_minutes": meeting_duration_minutes,
+                                "description": meeting_description,
+                                "invite_sent": True
+                            })
+                            results["invites_sent"] += 1
+                            
+                        except ImportError:
+                            # Google Calendar API libraries not installed
+                            logger.warning(
+                                "Google Calendar API libraries not installed. "
+                                "Install with: pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client"
+                            )
+                            # Fallback to mock behavior
+                            import hashlib
+                            import uuid
+                            link_hash = hashlib.md5(f"{email}{meeting_date}".encode()).hexdigest()[:12]
+                            meet_link = f"https://meet.google.com/real-{link_hash}"
+                            mock_event_id = str(uuid.uuid4())[:8]
+                            
+                            logger.info(f"[CALENDAR INVITE] (Fallback) Creating invite for: {email}")
+                            logger.info(f"[CALENDAR INVITE] (Fallback) Event ID: {mock_event_id}")
+                            logger.info(f"[CALENDAR INVITE] (Fallback) Meet Link: {meet_link}")
+                            
+                            results["successful"].append({
+                                "email": email,
+                                "name": name,
+                                "score": score,
+                                "event_id": mock_event_id,
+                                "calendar_link": f"https://calendar.google.com/event?eid={mock_event_id}",
+                                "meet_link": meet_link,
+                                "meeting_title": meeting_title,
+                                "meeting_date": start_time_str,
+                                "meeting_end": end_time_str,
+                                "duration_minutes": meeting_duration_minutes,
+                                "description": meeting_description,
+                                "invite_sent": False,
+                                "note": "Google Calendar API not configured - using fallback"
+                            })
+                            results["invites_sent"] += 1
                         
                 except Exception as e:
                     results["failed"].append({

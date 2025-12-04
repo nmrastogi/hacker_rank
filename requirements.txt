@@ -5,6 +5,11 @@ pytest-mock>=3.11.0
 pytest-cov>=4.1.0
 mcp>=0.9.0
 pydantic>=2.0.0
+# Google Calendar API (optional - only needed for real calendar invites)
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+google-api-python-client>=2.100.0
 # Note: FastAPI and uvicorn are optional - only needed if using HTTP transport
 # MCP server works with stdio transport without these
 fastapi>=0.115.0; python_version >= "3.8"

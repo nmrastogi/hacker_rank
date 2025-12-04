@@ -57,3 +57,7 @@ Thumbs.db
 
 try.py
 create_test.py
+
+# Google Calendar API
+credentials.json
+token.pickle
