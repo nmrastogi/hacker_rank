@@ -1,6 +1,14 @@
 # HackerRank Candidate Screening Agent
 
-An AI agent that automates the candidate screening workflow using the HackerRank API. It identifies candidates who pass initial tests, assigns them to advanced assessments, sends congratulatory emails, and creates Google Calendar invites for top performers.
+An intelligent automation system that streamlines technical hiring by integrating with HackerRank's assessment platform. The agent automates candidate evaluation, test progression, and communication workflows, reducing manual effort in technical recruitment.
+
+**Key Features:**
+- 🤖 Fully automated multi-stage candidate screening pipeline
+- 📧 Automated email notifications to successful candidates
+- 📅 Google Calendar integration for interview scheduling
+- 🤝 AI assistant integration via MCP server (Claude Desktop compatible)
+- 🧪 Mock data mode for testing without real API access
+- ✅ Comprehensive test coverage (55+ tests)
 
 ## Features
 
