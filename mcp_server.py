@@ -277,8 +277,8 @@ try:
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
-    print("Warning: MCP package not installed. Install with: pip install 'mcp[cli]'")
-    print("The server will not function without MCP installed.")
+    logger.warning("MCP package not installed. Install with: pip install 'mcp[cli]'")
+    logger.warning("The server will not function without MCP installed.")
 
 if MCP_AVAILABLE:
     # Initialize MCP server
@@ -1156,6 +1156,6 @@ Please:
         # mcp.run(transport="streamable-http", host="0.0.0.0", port=8000)
 else:
     if __name__ == "__main__":
-        print("Error: MCP package is not installed.")
-        print("Install it with: pip install 'mcp[cli]'")
-        print("Then run: pip install -r requirements.txt")
+        logger.error("MCP package is not installed.")
+        logger.error("Install it with: pip install 'mcp[cli]'")
+        logger.error("Then run: pip install -r requirements.txt")
