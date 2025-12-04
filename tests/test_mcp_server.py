@@ -70,6 +70,7 @@ class TestSendEmailToCandidates:
 class TestGetTestCandidates:
     """Tests for get_test_candidates MCP tool"""
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.get_all_candidates')
     @patch('mcp_server.new_agent.filter_passed')
@@ -123,6 +124,7 @@ class TestGetTestCandidates:
                 
                 assert result["passing_score"] == 60.0  # Default value
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.get_all_candidates')
     def test_get_test_candidates_error_handling(self, mock_get_all, mock_make_session):
@@ -157,6 +159,7 @@ class TestGetTestCandidates:
 class TestInviteCandidatesToTest:
     """Tests for invite_candidates_to_test MCP tool"""
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.invite_to_test')
     def test_invite_candidates_success(self, mock_invite, mock_make_session):
@@ -173,6 +176,7 @@ class TestInviteCandidatesToTest:
         assert len(result["failed"]) == 0
         assert mock_invite.call_count == 2
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.invite_to_test')
     def test_invite_candidates_partial_failure(self, mock_invite, mock_make_session):
@@ -210,6 +214,7 @@ class TestInviteCandidatesToTest:
         assert len(result["failed"]) == 0
         mock_invite.assert_not_called()
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     def test_invite_candidates_error_handling(self, mock_make_session):
         """Test error handling in invite_candidates_to_test"""
@@ -340,6 +345,7 @@ class TestRunScreeningPipeline:
 class TestGetCandidateScores:
     """Tests for get_candidate_scores MCP tool"""
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.get_all_candidates')
     @patch('mcp_server.new_agent.extract_score')
@@ -364,6 +370,7 @@ class TestGetCandidateScores:
         assert result["candidates"][0]["email"] == "alice@example.com"
         assert result["candidates"][0]["score"] == 85
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.get_all_candidates')
     @patch('mcp_server.new_agent.extract_score')
@@ -403,6 +410,7 @@ class TestGetCandidateScores:
             assert result["filtered_count"] == 0
             assert len(result["candidates"]) == 0
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     def test_get_candidate_scores_error_handling(self, mock_make_session):
         """Test error handling in get_candidate_scores"""
@@ -417,6 +425,7 @@ class TestGetCandidateScores:
 class TestMCPResources:
     """Tests for MCP resource endpoints"""
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.get_all_candidates')
     @patch('mcp_server.new_agent.extract_score')
@@ -439,6 +448,7 @@ class TestMCPResources:
         assert result["candidate_count"] == 1
         assert len(result["candidates"]) == 1
     
+    @patch('mcp_server.USE_MOCK_DATA', False)
     @patch('mcp_server.new_agent.make_session')
     @patch('mcp_server.new_agent.get_all_candidates')
     def test_get_test_candidates_resource_error(self, mock_get_all, mock_make_session):
